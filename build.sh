@@ -13,6 +13,7 @@ cp Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp config.example.json "$APP/Contents/Resources/config.example.json"
 codesign --force --sign - "$APP"
+touch "$APP"   # nudge Finder to refresh the cached icon
 
 echo "Built: $APP"
 echo "Run: open $APP"
