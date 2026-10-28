@@ -1,0 +1,18 @@
+{
+  "processes": [
+    {
+      "id": "example-ping",
+      "name": "Ping 1.1.1.1",
+      "managed": true,
+      "cwd": "~",
+      "command": "ping 1.1.1.1"
+    },
+    {
+      "id": "example-install-log",
+      "name": "install.log",
+      "managed": false,
+      "type": "file",
+      "path": "/var/log/install.log"
+    }
+  ]
+}

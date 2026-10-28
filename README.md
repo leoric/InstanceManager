@@ -15,9 +15,9 @@ Menu → **Settings…** opens a window where you can add, remove, reorder and e
 (name, kind, working directory, command / file path) with folder and file pickers.
 **Save & Apply** writes the config and restarts all managed processes.
 
-On first launch the config contains two examples (a `ping 1.1.1.1` process and a read-only watch on `/var/log/install.log`); edit or remove them in Settings.
-The config is stored as JSON at `~/Library/Application Support/InstanceManager/instance-manager.json`
-(same format as the old `procmon.json`, which is migrated automatically on first launch; **Open Config File** opens it if you prefer editing by hand).
+On first launch `config.json` is created from `config.example.json` (bundled into the app by `build.sh`), which contains two examples (a `ping 1.1.1.1` process and a read-only watch on `/var/log/install.log`); edit or remove them in Settings.
+The config is stored as JSON at `~/Library/Application Support/InstanceManager/config.json`
+(an older `instance-manager.json` or `ProcMon/procmon.json` is migrated automatically on first launch; **Open Config File** opens it if you prefer editing by hand).
 
 ## Menu
 

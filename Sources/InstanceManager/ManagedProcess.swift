@@ -6,9 +6,9 @@ enum RunState { case stopped, running, exited, failed }
 /// Derived from the last line of output.
 enum Health { case ok, warning, error }
 
-/// Runs the command via `/bin/zsh -l -c` in a separate session (setsid),
-/// so that when stopped, the entire group of processes can be killed.
-/// The entire state changes only on the main thread.
+/// Runs a command via `/bin/zsh -l -c` in its own session (setsid),
+/// so the whole process group can be killed on stop.
+/// All state is mutated on the main thread only.
 final class ManagedProcess {
     let source: Source
     private(set) var state: RunState = .stopped
@@ -187,7 +187,7 @@ final class ManagedProcess {
         }
     }
 
-    /// Last insurance when exiting the application.
+    /// Last-resort cleanup when the app quits.
     func forceKill() {
         if pid > 0 { killpg(pid, SIGKILL) }
     }
@@ -266,7 +266,7 @@ final class ManagedProcess {
         }
     }
 
-    /// Writes a line into ~/Library/Logs/InstanceManager/<id>.log
+    /// Appends a line to ~/Library/Logs/InstanceManager/<id>.log
     private func write(_ text: String) {
         logQueue.async { [weak self] in
             guard let self else { return }
@@ -276,7 +276,7 @@ final class ManagedProcess {
         }
     }
 
-    /// Call only on logQueue.
+    /// Call on logQueue only.
     private func openHandleIfNeeded() {
         if logHandle != nil { return }
         let fm = FileManager.default

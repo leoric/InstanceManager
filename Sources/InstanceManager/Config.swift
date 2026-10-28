@@ -52,39 +52,29 @@ enum ConfigStore {
     static let logsDir = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("Library/Logs/InstanceManager", isDirectory: true)
 
+    /// Used when config.example.json is missing from the app bundle.
+    private static let emptyConfig = "{\n  \"processes\": []\n}\n"
+
     static func ensureConfigExists() {
         let fm = FileManager.default
         try? fm.createDirectory(at: supportDir, withIntermediateDirectories: true)
-        // Migrate the config from the old "ProcMon" name, if present.
-        let old = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("ProcMon/procmon.json")
-        if !fm.fileExists(atPath: configURL.path), fm.fileExists(atPath: old.path) {
-            try? fm.copyItem(at: old, to: configURL)
-        }
-        if !fm.fileExists(atPath: configURL.path) {
-            try? defaultConfig.write(to: configURL, atomically: true, encoding: .utf8)
-        }
-    }
+        guard !fm.fileExists(atPath: configURL.path) else { return }
 
-    /// Written on first launch only. Two harmless examples that work on any Mac.
-    static let defaultConfig = #"""
-    {
-      "processes": [
-        {
-          "id": "example-ping",
-          "name": "Ping 1.1.1.1",
-          "managed": true,
-          "cwd": "~",
-          "command": "ping 1.1.1.1"
-        },
-        {
-          "id": "example-install-log",
-          "name": "install.log",
-          "managed": false,
-          "type": "file",
-          "path": "/var/log/install.log"
+        // Migrate from earlier names, newest first.
+        let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let legacy = [
+            supportDir.appendingPathComponent("instance-manager.json"),
+            appSupport.appendingPathComponent("ProcMon/procmon.json"),
+        ]
+        for url in legacy where fm.fileExists(atPath: url.path) {
+            if (try? fm.copyItem(at: url, to: configURL)) != nil { return }
         }
-      ]
+
+        // First launch: seed from the bundled config.example.json.
+        if let example = Bundle.main.url(forResource: "config.example", withExtension: "json"),
+           (try? fm.copyItem(at: example, to: configURL)) != nil {
+            return
+        }
+        try? emptyConfig.write(to: configURL, atomically: true, encoding: .utf8)
     }
-    """#
 }
