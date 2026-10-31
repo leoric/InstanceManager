@@ -1,0 +1,57 @@
+From d85fbaf91d58f0b0e01574551efe10580272509b Mon Sep 17 00:00:00 2001
+From: Claude <dev@example.com>
+Date: Thu, 29 Oct 2026 10:06:46 +0000
+Subject: [PATCH] Health: the first keyword in the line decides error vs
+ warning
+
+If a line contains both words, the one that appears first wins, so
+"WARNING ... NetworkError" is a warning instead of an error.
+---
+ README.md                                    |  2 +-
+ Sources/InstanceManager/ManagedProcess.swift | 15 +++++++++++----
+ 2 files changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/README.md b/README.md
+index b75e923..27c1ffd 100644
+--- a/README.md
++++ b/README.md
+@@ -24,7 +24,7 @@ The config is stored as JSON at `~/Library/Application Support/InstanceManager/c
+ - One row per entry: colored dot, name, status
+   (green running, gray stopped/exited, red failed, blue watched file).
+   Status and uptime refresh every second while the menu is open.
+-- Health: if the last output line of a running process contains `error` (case-insensitive) the dot is red and the status reads "error"; `warning` makes it yellow. Error wins if both appear. The menu bar icon turns red/yellow accordingly.
++- Health: if the last output line of a running process contains `error` (case-insensitive) the dot is red and the status reads "error"; `warning` makes it yellow. If both words appear in the line, the one that comes first wins. The menu bar icon turns red/yellow accordingly.
+ - Notifications: when a running process's last line starts containing `error` you get a notification with sound (kept in Notification Center until dismissed); `warning` gives a quiet one. Clicking it opens that instance's log. Repeats of the same level for the same process are suppressed for 60 s. For notifications that stay on screen until you close them, set System Settings → Notifications → Instance Manager → Alert style to **Alerts**.
+ - Per-entry submenu: last output line, Start / Stop / Restart, Open Log.
+ - Start All / Stop All, Settings, config/log shortcuts, Launch at Login, Quit.
+diff --git a/Sources/InstanceManager/ManagedProcess.swift b/Sources/InstanceManager/ManagedProcess.swift
+index 2d0a012..40da7e1 100644
+--- a/Sources/InstanceManager/ManagedProcess.swift
++++ b/Sources/InstanceManager/ManagedProcess.swift
+@@ -45,12 +45,19 @@ final class ManagedProcess {
+         return ConfigStore.logsDir.appendingPathComponent("\(safe).log")
+     }
+ 
+-    /// "error" in the last output line -> error (wins); "warning" -> warning. Case-insensitive.
++    /// Derived from the last output line (case-insensitive). If both words appear, the one
++    /// that comes first wins, since log levels usually lead the line:
++    /// "WARNING ... NetworkError" is a warning, "ERROR ... warning" is an error.
+     var health: Health {
+         let l = lastLine.lowercased()
+-        if l.contains("error") { return .error }
+-        if l.contains("warning") { return .warning }
+-        return .ok
++        let e = l.range(of: "error")?.lowerBound
++        let w = l.range(of: "warning")?.lowerBound
++        switch (e, w) {
++        case (nil, nil): return .ok
++        case (.some, nil): return .error
++        case (nil, .some): return .warning
++        case let (.some(ei), .some(wi)): return ei < wi ? .error : .warning
++        }
+     }
+ 
+     var uptime: TimeInterval? {
+-- 
+2.43.0
+

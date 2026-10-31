@@ -138,9 +138,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private func updateButton() {
         guard let button = statusItem.button else { return }
         let running = procs.values.filter { $0.state == .running }.count
-        let failed = procs.values.contains {
-            $0.state == .failed || ($0.state == .running && $0.health == .error)
-        }
+        // Only running processes affect the icon; stopped/exited/failed ones are ignored.
+        let failed = procs.values.contains { $0.state == .running && $0.health == .error }
         let warned = procs.values.contains { $0.state == .running && $0.health == .warning }
         // Never touch contentTintColor: it also tints the title and, once set, the
         // button stops adapting to the light/dark menu bar. Swap the icon instead.

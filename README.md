@@ -24,7 +24,7 @@ The config is stored as JSON at `~/Library/Application Support/InstanceManager/c
 - One row per entry: colored dot, name, status
   (green running, gray stopped/exited, red failed, blue watched file).
   Status and uptime refresh every second while the menu is open.
-- Health: if the last output line of a running process contains `error` (case-insensitive) the dot is red and the status reads "error"; `warning` makes it yellow. Error wins if both appear. The menu bar icon turns red/yellow accordingly.
+- Health: if the last output line of a running process contains `error` (case-insensitive) the dot is red and the status reads "error"; `warning` makes it yellow. If both words appear in the line, the one that comes first wins. The menu bar icon reflects running processes only: red if any has an error, yellow if any has a warning. Stopped, exited or failed processes do not affect it.
 - Notifications: when a running process's last line starts containing `error` you get a notification with sound (kept in Notification Center until dismissed); `warning` gives a quiet one. Clicking it opens that instance's log. Repeats of the same level for the same process are suppressed for 60 s. For notifications that stay on screen until you close them, set System Settings → Notifications → Instance Manager → Alert style to **Alerts**.
 - Per-entry submenu: last output line, Start / Stop / Restart, Open Log.
 - Start All / Stop All, Settings, config/log shortcuts, Launch at Login, Quit.

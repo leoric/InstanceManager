@@ -1,0 +1,45 @@
+From 18833fa4e2d383b1f777d209d5a420db5b6cd70e Mon Sep 17 00:00:00 2001
+From: Claude <dev@example.com>
+Date: Sat, 31 Oct 2026 11:01:02 +0000
+Subject: [PATCH] Menu bar icon color depends on running processes only
+
+Stopped, exited and failed processes no longer turn the icon red;
+only a running process whose last line is an error (red) or a
+warning (yellow) does.
+---
+ README.md                                 | 2 +-
+ Sources/InstanceManager/AppDelegate.swift | 5 ++---
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/README.md b/README.md
+index 27c1ffd..130d710 100644
+--- a/README.md
++++ b/README.md
+@@ -24,7 +24,7 @@ The config is stored as JSON at `~/Library/Application Support/InstanceManager/c
+ - One row per entry: colored dot, name, status
+   (green running, gray stopped/exited, red failed, blue watched file).
+   Status and uptime refresh every second while the menu is open.
+-- Health: if the last output line of a running process contains `error` (case-insensitive) the dot is red and the status reads "error"; `warning` makes it yellow. If both words appear in the line, the one that comes first wins. The menu bar icon turns red/yellow accordingly.
++- Health: if the last output line of a running process contains `error` (case-insensitive) the dot is red and the status reads "error"; `warning` makes it yellow. If both words appear in the line, the one that comes first wins. The menu bar icon reflects running processes only: red if any has an error, yellow if any has a warning. Stopped, exited or failed processes do not affect it.
+ - Notifications: when a running process's last line starts containing `error` you get a notification with sound (kept in Notification Center until dismissed); `warning` gives a quiet one. Clicking it opens that instance's log. Repeats of the same level for the same process are suppressed for 60 s. For notifications that stay on screen until you close them, set System Settings → Notifications → Instance Manager → Alert style to **Alerts**.
+ - Per-entry submenu: last output line, Start / Stop / Restart, Open Log.
+ - Start All / Stop All, Settings, config/log shortcuts, Launch at Login, Quit.
+diff --git a/Sources/InstanceManager/AppDelegate.swift b/Sources/InstanceManager/AppDelegate.swift
+index d53d722..d7a8b33 100644
+--- a/Sources/InstanceManager/AppDelegate.swift
++++ b/Sources/InstanceManager/AppDelegate.swift
+@@ -138,9 +138,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
+     private func updateButton() {
+         guard let button = statusItem.button else { return }
+         let running = procs.values.filter { $0.state == .running }.count
+-        let failed = procs.values.contains {
+-            $0.state == .failed || ($0.state == .running && $0.health == .error)
+-        }
++        // Only running processes affect the icon; stopped/exited/failed ones are ignored.
++        let failed = procs.values.contains { $0.state == .running && $0.health == .error }
+         let warned = procs.values.contains { $0.state == .running && $0.health == .warning }
+         // Never touch contentTintColor: it also tints the title and, once set, the
+         // button stops adapting to the light/dark menu bar. Swap the icon instead.
+-- 
+2.43.0
+

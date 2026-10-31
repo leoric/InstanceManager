@@ -45,12 +45,19 @@ final class ManagedProcess {
         return ConfigStore.logsDir.appendingPathComponent("\(safe).log")
     }
 
-    /// "error" in the last output line -> error (wins); "warning" -> warning. Case-insensitive.
+    /// Derived from the last output line (case-insensitive). If both words appear, the one
+    /// that comes first wins, since log levels usually lead the line:
+    /// "WARNING ... NetworkError" is a warning, "ERROR ... warning" is an error.
     var health: Health {
         let l = lastLine.lowercased()
-        if l.contains("error") { return .error }
-        if l.contains("warning") { return .warning }
-        return .ok
+        let e = l.range(of: "error")?.lowerBound
+        let w = l.range(of: "warning")?.lowerBound
+        switch (e, w) {
+        case (nil, nil): return .ok
+        case (.some, nil): return .error
+        case (nil, .some): return .warning
+        case let (.some(ei), .some(wi)): return ei < wi ? .error : .warning
+        }
     }
 
     var uptime: TimeInterval? {
